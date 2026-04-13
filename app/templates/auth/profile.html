@@ -35,6 +35,28 @@
     </div>
   </div>
 
+  <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+    <div class="flex items-center justify-between">
+        <div>
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Estado de cuenta</h3>
+            {% if current_user.is_verified %}
+                <span class="inline-flex items-center text-green-600 font-semibold">
+                    <svg class="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="m10 18 8-8-8-8-8 8 8 8zm4.707-8.707-6 6a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 1.414-1.414L8 13.586l5.293-5.293a1 1 0 0 1 1.414 1.414z" clip-rule="evenodd"/></svg>
+                    Cuenta Verificada para Adopción
+                </span>
+            {% else %}
+                <span class="text-amber-600 font-medium text-sm block mb-2">
+                    Aún no has verificado tu perfil para adoptar mascotas.
+                </span>
+                <a href="{{ url_for('auth.take_quiz') }}" 
+                   class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition">
+                    Verificar mi cuenta con IA
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
   <h2 class="text-xl font-extrabold text-gray-900 mb-4">Mis reportes <span class="text-gray-400 font-normal">({{ pets|length }})</span></h2>
   {% if pets %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

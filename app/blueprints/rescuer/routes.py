@@ -5,6 +5,7 @@ from app.models import (db, Pet, AdoptionRequest, Sighting, PetStatusLog,
                         AdoptionStatus, PetStatus, Donation, NotifType)
 from app.utils import rescuer_required, create_notification, DOLORES_ZONES
 from sqlalchemy import func
+from app.utils import jwt_required
 
 rescuer_bp = Blueprint("rescuer", __name__)
 
@@ -15,7 +16,7 @@ def _check_rescuer():
 
 
 @rescuer_bp.route("/")
-@login_required
+@jwt_required
 @rescuer_required
 def dashboard():
     """Dashboard principal del rescatista con métricas relevantes."""
@@ -55,7 +56,7 @@ def dashboard():
 
 
 @rescuer_bp.route("/mis-mascotas")
-@login_required
+@jwt_required
 @rescuer_required
 def my_pets():
     """Lista completa de mascotas gestionadas por el rescatista."""
@@ -73,7 +74,7 @@ def my_pets():
 
 
 @rescuer_bp.route("/solicitudes")
-@login_required
+@jwt_required
 @rescuer_required
 def all_requests():
     """Todas las solicitudes de adopción de mascotas del rescatista."""
@@ -100,7 +101,7 @@ def all_requests():
 
 
 @rescuer_bp.route("/avistamientos")
-@login_required
+@jwt_required
 @rescuer_required
 def sightings():
     """Avistamientos de mascotas perdidas gestionadas por el rescatista."""
@@ -119,7 +120,7 @@ def sightings():
 
 
 @rescuer_bp.route("/avistamiento/<int:sighting_id>/confirmar", methods=["POST"])
-@login_required
+@jwt_required
 @rescuer_required
 def confirm_sighting(sighting_id):
     s = Sighting.query.get_or_404(sighting_id)
@@ -135,7 +136,7 @@ def confirm_sighting(sighting_id):
 
 
 @rescuer_bp.route("/tomar-mascota/<int:pet_id>", methods=["POST"])
-@login_required
+@jwt_required
 @rescuer_required
 def take_pet(pet_id):
     """Un rescatista puede asignarse como responsable de una mascota."""
@@ -158,7 +159,7 @@ def take_pet(pet_id):
 
 
 @rescuer_bp.route("/notificaciones")
-@login_required
+@jwt_required
 def notifications():
     """Centro de notificaciones del usuario."""
     notifs = current_user.notifications.order_by(
@@ -171,7 +172,7 @@ def notifications():
 
 
 @rescuer_bp.route("/notificaciones/marcar-leidas", methods=["POST"])
-@login_required
+@jwt_required
 def mark_all_read():
     current_user.notifications.filter_by(is_read=False).update({"is_read": True})
     db.session.commit()

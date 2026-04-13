@@ -1,16 +1,17 @@
 """admin/routes.py — Panel de administración completo."""
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, g
 from sqlalchemy import func
-from app.models import (db, User, Pet, Comment, AdoptionRequest, Donation,
+from app.models import (db, User, Pet, Comment, AdoptionRequest, Donation, UserQuiz,
                         UserRole, PetStatus, AdoptionStatus)
-from app.utils import admin_required
+from app.utils import admin_required, jwt_required
+
+
 
 admin_bp = Blueprint("admin", __name__)
 
 
 @admin_bp.route("/")
-@login_required
+@jwt_required
 @admin_required
 def dashboard():
     stats = {
@@ -35,7 +36,7 @@ def dashboard():
 # ── Usuarios ─────────────────────────────────────────────────────────────────
 
 @admin_bp.route("/usuarios")
-@login_required
+@jwt_required
 @admin_required
 def list_users():
     page     = request.args.get("page", 1, type=int)
@@ -54,14 +55,14 @@ def list_users():
 
 
 @admin_bp.route("/usuarios/<int:user_id>/rol", methods=["POST"])
-@login_required
+@jwt_required
 @admin_required
 def change_role(user_id):
     user     = User.query.get_or_404(user_id)
     new_role = request.form.get("role", "")
     if new_role not in UserRole.ALL:
         flash("Rol inválido.", "danger")
-    elif user.id == current_user.id:
+    elif user.id == g.current_user.id:
         flash("No puedes cambiar tu propio rol.", "warning")
     else:
         user.role = new_role
@@ -71,7 +72,7 @@ def change_role(user_id):
 
 
 @admin_bp.route("/usuarios/<int:user_id>/verificar", methods=["POST"])
-@login_required
+@jwt_required
 @admin_required
 def verify_user(user_id):
     user = User.query.get_or_404(user_id)
@@ -83,11 +84,11 @@ def verify_user(user_id):
 
 
 @admin_bp.route("/usuarios/<int:user_id>/activar", methods=["POST"])
-@login_required
+@jwt_required
 @admin_required
 def toggle_user(user_id):
     user = User.query.get_or_404(user_id)
-    if user.id == current_user.id:
+    if user.id == g.current_user.id:
         flash("No puedes desactivar tu propia cuenta.", "warning")
     else:
         user.is_active = not user.is_active
@@ -99,7 +100,7 @@ def toggle_user(user_id):
 # ── Mascotas ─────────────────────────────────────────────────────────────────
 
 @admin_bp.route("/mascotas")
-@login_required
+@jwt_required
 @admin_required
 def list_pets():
     page      = request.args.get("page", 1, type=int)
@@ -119,7 +120,7 @@ def list_pets():
 
 
 @admin_bp.route("/mascotas/<int:pet_id>/restaurar", methods=["POST"])
-@login_required
+@jwt_required
 @admin_required
 def restore_pet(pet_id):
     pet = Pet.query.get_or_404(pet_id)
@@ -130,7 +131,7 @@ def restore_pet(pet_id):
 
 
 @admin_bp.route("/mascotas/<int:pet_id>/eliminar-permanente", methods=["POST"])
-@login_required
+@jwt_required
 @admin_required
 def hard_delete_pet(pet_id):
     pet = Pet.query.get_or_404(pet_id)
@@ -143,7 +144,7 @@ def hard_delete_pet(pet_id):
 # ── Solicitudes ──────────────────────────────────────────────────────────────
 
 @admin_bp.route("/solicitudes")
-@login_required
+@jwt_required
 @admin_required
 def list_requests():
     page     = request.args.get("page", 1, type=int)
@@ -160,7 +161,7 @@ def list_requests():
 # ── Donaciones ───────────────────────────────────────────────────────────────
 
 @admin_bp.route("/donaciones")
-@login_required
+@jwt_required
 @admin_required
 def list_donations():
     page = request.args.get("page", 1, type=int)
@@ -168,3 +169,51 @@ def list_donations():
     total_sum = db.session.query(func.sum(Donation.amount)).scalar() or 0
     return render_template("admin/donations.html", donations=donations,
                            total_sum=total_sum, title="Donaciones")
+
+
+@admin_bp.route("/evaluaciones")
+def view_quizzes():
+    # ANTES: Traía absolutamente todos los registros
+    # quizzes = UserQuiz.query.all()
+    
+    # AHORA: Filtramos para traer ÚNICAMENTE los pendientes. 
+    # Usamos ilike() para que no importe si dice 'Pendiente', 'pendiente' o 'PENDIENTE'
+    quizzes = UserQuiz.query.filter(UserQuiz.status.ilike('pendiente')).all()
+    
+    return render_template("admin/quizzes.html", quizzes=quizzes)
+
+@admin_bp.route("/evaluacion/<int:quiz_id>/cambiar_estado", methods=["POST"])
+def cambiar_estado_evaluacion(quiz_id):
+    # Obtener qué botón presionó el admin
+    accion = request.form.get("accion") 
+    
+    quiz = UserQuiz.query.get_or_404(quiz_id)
+    user = User.query.get(quiz.user_id)
+
+    # Buscamos un identificador válido para el usuario (username, email, o ID)
+    if hasattr(user, 'username'):
+        identificador = user.username
+    elif hasattr(user, 'email'):
+        identificador = user.email
+    else:
+        identificador = f"#{user.id}"
+
+    if accion == "aprobar":
+        user.is_verified = True
+        quiz.status = "aprobado" 
+        flash(f"¡Usuario {identificador} verificado para adopción!", "success")
+        
+    elif accion == "rechazar":
+        user.is_verified = False
+        quiz.status = "rechazado"
+        flash(f"La solicitud de {identificador} ha sido rechazada.", "error")
+        
+    elif accion == "pendiente":
+        user.is_verified = False
+        quiz.status = "pendiente"
+        flash(f"La evaluación de {identificador} se mantiene en revisión.", "info")
+
+    db.session.commit()
+    
+    # IMPORTANTE: Verifica que 'admin.view_quizzes' sea el nombre correcto de tu vista de la tabla
+    return redirect(url_for('admin.view_quizzes'))

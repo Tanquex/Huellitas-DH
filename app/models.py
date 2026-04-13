@@ -312,3 +312,20 @@ class Notification(db.Model):
 
     def __repr__(self):
         return f"<Notification user:{self.user_id} [{self.type}] read:{self.is_read}>"
+
+class UserQuiz(db.Model):
+    __tablename__ = "user_quizzes"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    # Respuestas (puedes guardarlas como JSON o texto largo)
+    answers_json = db.Column(db.JSON, nullable=False)
+    
+    # Análisis de la IA
+    ai_score = db.Column(db.Integer)  # 0 a 100
+    ai_feedback = db.Column(db.Text)  # Explicación de la IA
+    
+    status = db.Column(db.String(20), default="Pendiente") # Pendiente, Revisado
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("quiz", uselist=False))

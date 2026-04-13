@@ -1,10 +1,48 @@
 """utils.py — helpers, decoradores de roles, notificaciones, zonas."""
 import os, uuid
 from functools import wraps
-from flask import abort, current_app, url_for
-from flask_login import current_user
+import jwt
+from datetime import datetime, timezone, timedelta
+from functools import wraps
+from flask import request, redirect, url_for, flash, g, current_app
 from werkzeug.utils import secure_filename
 from PIL import Image
+
+def generate_jwt(user_id):
+    """Genera un token JWT con vigencia de 24 horas."""
+    payload = {
+        'exp': datetime.now(timezone.utc) + timedelta(days=1),
+        'iat': datetime.now(timezone.utc),
+        'sub': user_id
+    }
+    # Asegúrate de tener un SECRET_KEY fuerte en tu config.py
+    return jwt.encode(payload, current_app.config.get('SECRET_KEY'), algorithm='HS256')
+
+def jwt_required(f):
+    """Decorador que reemplaza a @login_required."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Buscamos el token en las cookies
+        token = request.cookies.get('access_token')
+        
+        if not token:
+            flash('Por favor inicia sesión para acceder.', 'warning')
+            return redirect(url_for('auth.login', next=request.url))
+        
+        try:
+            # Decodificamos y validamos el token
+            data = jwt.decode(token, current_app.config.get('SECRET_KEY'), algorithms=['HS256'])
+            # Guardamos el ID del usuario en el contexto de la petición actual
+            g.current_user_id = data['sub']
+        except jwt.ExpiredSignatureError:
+            flash('Tu sesión ha expirado. Por favor inicia sesión nuevamente.', 'warning')
+            return redirect(url_for('auth.login'))
+        except jwt.InvalidTokenError:
+            flash('Autenticación inválida. Por favor inicia sesión.', 'danger')
+            return redirect(url_for('auth.login'))
+            
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -56,9 +94,9 @@ def role_required(*roles):
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            if not current_user.is_authenticated:
+            if not g.current_user.is_authenticated:
                 abort(401)
-            if current_user.role not in roles:
+            if g.current_user.role not in roles:
                 abort(403)
             return f(*args, **kwargs)
         return decorated

@@ -10,6 +10,21 @@
   </div>
 </div>
 
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center">
+        <div class="p-3 bg-indigo-100 rounded-lg text-indigo-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="ml-4">
+            <h4 class="text-gray-500 text-sm">Impulsadas por Gemini IA</h4>
+            <p class="text-2xl font-semibold text-gray-800">Validaciones Pendientes</p>
+        </div>
+    </div>
+    <a href="{{ url_for('admin.view_quizzes') }}" class="mt-4 block text-center text-indigo-600 font-bold text-sm hover:underline">
+        Ver evaluaciones →
+    </a>
+</div>
+
 <!-- Stats grid -->
 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
   {% for icon, label, val, bg in [

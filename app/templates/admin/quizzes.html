@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block title %}Panel de Evaluaciones - Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Evaluaciones de Adopción (IA)</h1>
+            <p class="text-gray-600 mt-2">Revisa las recomendaciones generadas por Gemini y toma una decisión.</p>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+            {% for category, message in messages %}
+                <div class="p-4 rounded-lg font-medium 
+                    {% if category == 'success' %} bg-green-100 text-green-700 
+                    {% elif category == 'error' %} bg-red-100 text-red-700 
+                    {% else %} bg-blue-100 text-blue-700 {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID Cuestionario</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Puntaje IA</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Análisis de Gemini</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for quiz in quizzes %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-bold text-gray-900"># {{ quiz.id }}</div>
+                        </td>
+                        
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full 
+                                {% if quiz.ai_score and quiz.ai_score >= 80 %} bg-green-100 text-green-800 
+                                {% elif quiz.ai_score and quiz.ai_score >= 50 %} bg-yellow-100 text-yellow-800 
+                                {% else %} bg-red-100 text-red-800 {% endif %}">
+                                {{ quiz.ai_score if quiz.ai_score is not none else 'N/A' }} / 100
+                            </span>
+                        </td>
+                        
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-700 max-w-md break-words">
+                                {{ quiz.ai_feedback if quiz.ai_feedback else 'Sin análisis disponible.' }}
+                            </div>
+                        </td>
+                        
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-md 
+                                {% if quiz.status == 'aprobado' %} bg-green-50 text-green-700
+                                {% elif quiz.status == 'rechazado' %} bg-red-50 text-red-700
+                                {% else %} bg-gray-100 text-gray-700 {% endif %} capitalize">
+                                {{ quiz.status }}
+                            </span>
+                        </td>
+                        
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <form action="{{ url_for('admin.cambiar_estado_evaluacion', quiz_id=quiz.id) }}" method="POST" class="flex space-x-2">
+                                
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                
+                                <button type="submit" name="accion" value="aprobar" title="Aprobar Adopción"
+                                        class="inline-flex items-center px-3 py-2 bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 rounded-lg transition duration-150 font-bold text-xs shadow-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Verificar
+                                </button>
+
+                                <button type="submit" name="accion" value="rechazar" title="Rechazar Adopción"
+                                        class="inline-flex items-center px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800 rounded-lg transition duration-150 font-bold text-xs shadow-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    Rechazar
+                                </button>
+
+                                <button type="submit" name="accion" value="pendiente" title="Dejar en revisión"
+                                        class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800 rounded-lg transition duration-150 font-bold text-xs shadow-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Posponer
+                                </button>
+                                
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500 bg-gray-50">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <p class="text-lg font-medium">No hay evaluaciones pendientes</p>
+                            <p class="text-sm">Las encuestas enviadas por los usuarios aparecerán aquí.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

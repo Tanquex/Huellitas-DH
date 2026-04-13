@@ -4,12 +4,13 @@ from flask_login import login_required, current_user
 from app.models import db, Pet, AdoptionRequest, AdoptionStatus, PetStatus, PetStatusLog, NotifType
 from app.utils import rescuer_required, create_notification
 from .forms import AdoptionRequestForm
+from app.utils import jwt_required
 
 adoptions_bp = Blueprint("adoptions", __name__)
 
 
 @adoptions_bp.route("/solicitar/<int:pet_id>", methods=["GET", "POST"])
-@login_required
+@jwt_required
 def request_adoption(pet_id):
     pet = Pet.query.get_or_404(pet_id)
     if pet.status not in (PetStatus.ADOPTION, PetStatus.URGENT):
@@ -47,7 +48,7 @@ def request_adoption(pet_id):
 
 
 @adoptions_bp.route("/mis-solicitudes")
-@login_required
+@jwt_required
 def my_requests():
     reqs = AdoptionRequest.query.filter_by(applicant_id=current_user.id)\
                .order_by(AdoptionRequest.created_at.desc()).all()
@@ -55,7 +56,7 @@ def my_requests():
 
 
 @adoptions_bp.route("/revisar/<int:req_id>", methods=["GET", "POST"])
-@login_required
+@jwt_required
 def review(req_id):
     req = AdoptionRequest.query.get_or_404(req_id)
     pet = req.pet
@@ -99,7 +100,7 @@ def review(req_id):
 
 
 @adoptions_bp.route("/mascota/<int:pet_id>/solicitudes")
-@login_required
+@jwt_required
 def pet_requests(pet_id):
     pet = Pet.query.get_or_404(pet_id)
     if not current_user.is_rescuer and pet.reporter_id != current_user.id:

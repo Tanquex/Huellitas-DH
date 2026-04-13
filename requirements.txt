@@ -7,7 +7,9 @@ WTForms==3.1.2
 Flask-Bcrypt==1.0.1
 PyJWT==2.8.0
 python-dotenv==1.0.1
-psycopg2-binary==2.9.9
-Pillow==10.3.0
+psycopg2-binary
+Pillow
 Werkzeug==3.0.3
 email-validator==2.2.0
+Flask-JWT-Extended
+google-genai
