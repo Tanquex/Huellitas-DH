@@ -51,8 +51,8 @@
           <tr class="hover:bg-gray-50 transition-colors {{ 'bg-red-50/50' if not pet.is_active }}">
             <td class="px-5 py-4">
               <div class="flex items-center gap-3">
-                {% if pet.image_url %}
-                  <img src="{{ url_for('static', filename='uploads/pets/' + pet.image_url) }}"
+                {% if pet.image_data %}
+                  <img src="{{ url_for('pets.get_image', pet_id=pet.id) }}"
                        class="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-gray-100"/>
                 {% else %}
                   <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">

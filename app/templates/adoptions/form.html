@@ -12,8 +12,8 @@
 
   <!-- Mini card de la mascota -->
   <div class="card mb-6 p-4 flex items-center gap-4 bg-gradient-to-r from-orange-50 to-amber-50 border-orange-100">
-    {% if pet.image_url %}
-      <img src="{{ url_for('static', filename='uploads/pets/' + pet.image_url) }}"
+    {% if pet.image_data %}
+      <img src="{{ url_for('pets.get_image', pet_id=pet.id) }}"
            class="w-16 h-16 rounded-2xl object-cover shadow-sm border-2 border-white flex-shrink-0"/>
     {% else %}
       <div class="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center text-3xl flex-shrink-0">

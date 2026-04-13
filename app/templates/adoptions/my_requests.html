@@ -9,8 +9,8 @@
     {% for req in requests %}
       <div class="card p-5 flex flex-col sm:flex-row gap-4 hover:shadow-card-hover transition-shadow">
         <a href="{{ url_for('pets.detail', pet_id=req.pet.id) }}" class="flex-shrink-0">
-          {% if req.pet.image_url %}
-            <img src="{{ url_for('static', filename='uploads/pets/' + req.pet.image_url) }}"
+          {% if req.pet.image_data %}
+            <img src="{{ url_for('pets.get_image', pet_id=req.pet.id) }}"
                  class="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-sm"/>
           {% else %}
             <div class="w-20 h-20 rounded-2xl bg-orange-50 flex items-center justify-center text-3xl">

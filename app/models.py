@@ -140,7 +140,7 @@ class Pet(db.Model):
     location_zone      = db.Column(db.String(200), nullable=False, index=True)
     location_reference = db.Column(db.String(255), nullable=True)
     last_seen_date     = db.Column(db.Date, nullable=True)
-    image_url          = db.Column(db.String(255), nullable=True)
+    image_data         = db.Column(db.LargeBinary, nullable=True)
     is_active          = db.Column(db.Boolean, default=True, nullable=False, index=True)
     reporter_id        = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     rescuer_id         = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)

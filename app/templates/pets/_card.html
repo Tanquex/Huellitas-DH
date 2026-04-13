@@ -2,8 +2,8 @@
    class="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden">
   <!-- Imagen -->
   <div class="relative h-44 bg-gradient-to-br from-orange-50 to-amber-50 overflow-hidden flex-shrink-0">
-    {% if pet.image_url %}
-      <img src="{{ url_for('static', filename='uploads/pets/' + pet.image_url) }}"
+    {% if pet.image_data %}
+      <img src="{{ url_for('pets.get_image', pet_id=pet.id) }}"
            alt="{{ pet.display_name }}"
            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
     {% else %}

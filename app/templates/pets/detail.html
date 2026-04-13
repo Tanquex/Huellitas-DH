@@ -16,8 +16,8 @@
       <!-- Imagen + badge -->
       <div class="card overflow-hidden">
         <div class="relative">
-          {% if pet.image_url %}
-            <img src="{{ url_for('static', filename='uploads/pets/' + pet.image_url) }}"
+          {% if pet.image_data %}
+            <img src="{{ url_for('pets.get_image', pet_id=pet.id) }}"
                  alt="{{ pet.display_name }}"
                  class="w-full h-72 object-cover"/>
           {% else %}

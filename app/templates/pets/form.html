@@ -83,9 +83,9 @@
       <!-- ── Sección: Foto ────────────────────────────── -->
       <div>
         <p class="form-section-title">Fotografía</p>
-        {% if pet and pet.image_url %}
+        {% if pet and pet.image_data %}
           <div class="flex items-center gap-4 mb-4 p-4 bg-gray-50 rounded-2xl">
-            <img src="{{ url_for('static', filename='uploads/pets/' + pet.image_url) }}"
+            <img src="{{ url_for('pets.get_image', pet_id=pet.id) }}"
                  class="w-20 h-20 object-cover rounded-xl border-2 border-white shadow-sm"/>
             <div>
               <p class="text-sm font-semibold text-gray-700">Imagen actual</p>

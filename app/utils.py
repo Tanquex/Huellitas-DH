@@ -29,29 +29,25 @@ def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def save_pet_image(file) -> str | None:
+def save_pet_image(file) -> bytes | None:
     if not file or not allowed_file(file.filename):
         return None
-    ext  = file.filename.rsplit(".", 1)[1].lower()
-    name = f"{uuid.uuid4().hex}.{ext}"
-    path = os.path.join(current_app.config["UPLOAD_FOLDER"], name)
-    img  = Image.open(file)
+    
+    img = Image.open(file)
     img.thumbnail((900, 900), Image.LANCZOS)
-    # Convertir RGBA a RGB para JPEGs
+    
+    # Convert RGBA to RGB for JPEGs
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGB")
-        name = f"{uuid.uuid4().hex}.jpg"
-        path = os.path.join(current_app.config["UPLOAD_FOLDER"], name)
-    img.save(path, optimize=True, quality=85)
-    return name
+    
+    # Save to bytes buffer
+    from io import BytesIO
+    buffer = BytesIO()
+    img.save(buffer, format='JPEG', optimize=True, quality=85)
+    return buffer.getvalue()
 
 
-def delete_pet_image(filename: str):
-    if not filename:
-        return
-    path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
-    if os.path.exists(path):
-        os.remove(path)
+# No longer needed for binary storage
 
 
 # ─── Decoradores de roles ────────────────────────────────────────────────────

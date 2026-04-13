@@ -1,9 +1,9 @@
 """pets/routes.py — CRUD mascotas, comentarios, avistamientos, cambio de estado."""
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, Response
 from flask_login import login_required, current_user
 from app.models import (db, Pet, Comment, PetStatusLog, Sighting,
                         PetStatus, AdoptionRequest, NotifType)
-from app.utils import save_pet_image, delete_pet_image, DOLORES_ZONES, create_notification
+from app.utils import save_pet_image, DOLORES_ZONES, create_notification
 from .forms import PetForm, CommentForm, StatusUpdateForm, SightingForm
 
 pets_bp = Blueprint("pets", __name__)
@@ -39,14 +39,14 @@ def index():
 def create():
     form = PetForm()
     if form.validate_on_submit():
-        img = save_pet_image(form.image.data) if form.image.data and form.image.data.filename else None
+        img_data = save_pet_image(form.image.data) if form.image.data and form.image.data.filename else None
         pet = Pet(
             name=form.name.data or None, species=form.species.data,
             breed=form.breed.data or None, approximate_age=form.approximate_age.data or None,
             color=form.color.data, description=form.description.data,
             status=form.status.data, location_zone=form.location_zone.data,
             location_reference=form.location_reference.data or None,
-            last_seen_date=form.last_seen_date.data, image_url=img,
+            last_seen_date=form.last_seen_date.data, image_data=img_data,
             reporter_id=current_user.id,
         )
         db.session.add(pet)
@@ -97,8 +97,7 @@ def edit(pet_id):
                 flash(msg, "danger")
                 return render_template("pets/form.html", form=form, title="Editar", action="Editar", pet=pet)
         if form.image.data and form.image.data.filename:
-            delete_pet_image(pet.image_url)
-            pet.image_url = save_pet_image(form.image.data)
+            pet.image_data = save_pet_image(form.image.data)
         pet.name = form.name.data or None
         pet.species = form.species.data
         pet.breed = form.breed.data or None
@@ -210,3 +209,11 @@ def add_sighting(pet_id):
         db.session.commit()
         flash("¡Avistamiento reportado! El dueño ha sido notificado.", "success")
     return redirect(url_for("pets.detail", pet_id=pet.id))
+
+
+@pets_bp.route("/<int:pet_id>/imagen")
+def get_image(pet_id):
+    pet = Pet.query.get_or_404(pet_id)
+    if not pet.image_data:
+        abort(404)
+    return Response(pet.image_data, mimetype='image/jpeg')
